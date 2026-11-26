@@ -36,6 +36,13 @@
     <?php endif; ?>
 </div>
 
+<?php if ($mensajeCita !== null): ?>
+    <div class="alert alert-<?= htmlspecialchars($mensajeCita['tipo']) ?> alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($mensajeCita['texto']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+<?php endif; ?>
+
 <?php if ($usuario['rol'] === 'cliente'): ?>
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-header bg-white fw-semibold">

@@ -31,74 +31,51 @@ class CitaController {
             $mascotas = $this->mascotaModel->listarTodas();
         }
 
+        $mensajeCita = $_SESSION['mensaje_cita'] ?? null;
+        unset($_SESSION['mensaje_cita']);
+
         require __DIR__ . '/../views/dashboard/index.php';
     }
 
     // TODO [Sprint 2 - RF03]: Método agendarCita()
-
     public function cambiarEstadoCita() {
         if (!isset($_SESSION['usuario'])) {
             header('Location: index.php?action=login');
             exit;
         }
 
+        if ($_SESSION['usuario']['rol'] !== 'recepcionista') {
+            http_response_code(403);
+            exit('No tienes permiso para actualizar el estado de la cita.');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: index.php?action=dashboard');
-            exit;
+            http_response_code(405);
+            header('Allow: POST');
+            exit('Método no permitido.');
         }
 
-        $usuario = $_SESSION['usuario'];
-        $idCita = filter_input(INPUT_POST, 'id_cita', FILTER_VALIDATE_INT);
-        $estado = trim($_POST['estado'] ?? '');
+        $idCita = filter_var($_POST['id_cita'] ?? null, FILTER_VALIDATE_INT);
+        $estado = $_POST['estado'] ?? '';
 
-        if (!$idCita) {
-            $_SESSION['flash_error'] = 'Identificador de cita no válido.';
-            header('Location: index.php?action=dashboard');
-            exit;
-        }
-
-        $cita = $this->citaModel->obtenerPorId($idCita);
-        if (!$cita) {
-            $_SESSION['flash_error'] = 'La cita indicada no existe.';
-            header('Location: index.php?action=dashboard');
-            exit;
-        }
-
-        $transiciones = [
-            'pendiente' => ['confirmada', 'cancelada', 'atendida'],
-            'confirmada' => ['cancelada', 'atendida'],
-            'cancelada' => [],
-            'atendida' => []
-        ];
-        $estadoActual = $cita['estado'];
-
-        if (!isset($transiciones[$estadoActual]) || !in_array($estado, $transiciones[$estadoActual], true)) {
-            $_SESSION['flash_error'] = 'No se puede cambiar una cita ' . $estadoActual . ' a ' . $estado . '.';
-            header('Location: index.php?action=dashboard');
-            exit;
-        }
-
-        $notaClinica = null;
-        if ($usuario['rol'] === 'recepcionista' && in_array($estado, ['confirmada', 'cancelada'], true)) {
-            $notaClinica = null;
-        } elseif ($usuario['rol'] === 'veterinario' && $estado === 'atendida' && (int)$cita['id_veterinario'] === (int)$usuario['id']) {
-            $notaClinica = trim($_POST['nota_clinica'] ?? '');
-            if ($notaClinica === '') {
-                $_SESSION['flash_error'] = 'Debes ingresar la nota clínica para marcar la cita como atendida.';
-                header('Location: index.php?action=dashboard');
-                exit;
-            }
+        if ($idCita === false || $idCita === null ||
+            !in_array($estado, ['confirmada', 'cancelada'], true)) {
+            $_SESSION['mensaje_cita'] = [
+                'tipo' => 'danger',
+                'texto' => 'La solicitud para actualizar la cita no es válida.'
+            ];
+        } elseif ($this->citaModel->recepcionistaActualizarEstado($idCita, $estado)) {
+            $_SESSION['mensaje_cita'] = [
+                'tipo' => 'success',
+                'texto' => $estado === 'confirmada'
+                    ? 'La cita fue aceptada.'
+                    : 'La cita fue rechazada.'
+            ];
         } else {
-            $_SESSION['flash_error'] = 'No tienes permisos para realizar este cambio de estado.';
-            header('Location: index.php?action=dashboard');
-            exit;
-        }
-
-        $ok = $this->citaModel->actualizarEstado($idCita, $estado, $notaClinica);
-        if ($ok) {
-            $_SESSION['flash_success'] = 'Cita #' . $idCita . ' marcada como ' . $estado . ' correctamente.';
-        } else {
-            $_SESSION['flash_error'] = 'No se pudo actualizar el estado de la cita.';
+            $_SESSION['mensaje_cita'] = [
+                'tipo' => 'danger',
+                'texto' => 'No se pudo actualizar la cita. Puede que ya no esté pendiente.'
+            ];
         }
 
         header('Location: index.php?action=dashboard');
