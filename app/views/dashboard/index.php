@@ -201,13 +201,21 @@
                             <td><?= htmlspecialchars($c['motivo']) ?></td>
                             <td><span class="badge <?= $badgeClass ?> text-uppercase"><?= htmlspecialchars($c['estado']) ?></span></td>
                             <td>
-                                <?php if ($usuario['rol'] === 'recepcionista'): ?>
-                                    <!-- TODO [Sprint 3 - RF05]: Conectar botones de confirmar / cancelar -->
-                                    <button class="btn btn-sm btn-outline-success" onclick="mostrarAlertaSprint('Sprint 3 - RF05: Confirmar cita #<?= $c['id'] ?>')">Confirmar</button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="mostrarAlertaSprint('Sprint 3 - RF05: Cancelar cita #<?= $c['id'] ?>')">Cancelar</button>
-                                <?php elseif ($usuario['rol'] === 'veterinario'): ?>
-                                    <!-- TODO [Sprint 3 - RF06]: Conectar modal para registrar diagnóstico y marcar atendida -->
-                                    <button class="btn btn-sm btn-outline-primary" onclick="mostrarAlertaSprint('Sprint 3 - RF06: Atender cita #<?= $c['id'] ?>')">Atender</button>
+                                <?php if ($usuario['rol'] === 'recepcionista' && in_array($c['estado'], ['pendiente', 'confirmada'], true)): ?>
+                                    <form method="POST" action="index.php?action=cambiar_estado_cita" class="d-flex gap-1 flex-wrap">
+                                        <input type="hidden" name="id_cita" value="<?= (int)$c['id'] ?>">
+                                        <?php if ($c['estado'] === 'pendiente'): ?>
+                                            <button type="submit" name="estado" value="confirmada" class="btn btn-sm btn-outline-success">Confirmar</button>
+                                        <?php endif; ?>
+                                        <button type="submit" name="estado" value="cancelada" class="btn btn-sm btn-outline-danger">Cancelar</button>
+                                    </form>
+                                <?php elseif ($usuario['rol'] === 'veterinario' && in_array($c['estado'], ['pendiente', 'confirmada'], true)): ?>
+                                    <form method="POST" action="index.php?action=cambiar_estado_cita" class="d-flex gap-1 align-items-center">
+                                        <input type="hidden" name="id_cita" value="<?= (int)$c['id'] ?>">
+                                        <input type="hidden" name="estado" value="atendida">
+                                        <input type="text" name="nota_clinica" class="form-control form-control-sm" placeholder="Nota clínica..." required>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Atender</button>
+                                    </form>
                                 <?php else: ?>
                                     <span class="small text-muted"><?= htmlspecialchars($c['nota_clinica'] ?? 'Sin notas') ?></span>
                                 <?php endif; ?>

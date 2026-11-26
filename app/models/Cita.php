@@ -38,8 +38,8 @@ class Cita {
         $query = "SELECT COUNT(*) AS total 
                   FROM " . $this->table . " 
                   WHERE id_veterinario = :id_veterinario 
-                  AND fecha_hora = :fecha_hora";
-                  // Nota: Si manejas estados, agrega: AND estado != 'cancelada'
+                  AND fecha_hora = :fecha_hora
+                  AND estado != 'cancelada'";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id_veterinario', $id_veterinario);
@@ -77,6 +77,43 @@ class Cita {
         }
 
         return false;
+    }
+
+    public function obtenerPorId($id) {
+        $query = "SELECT c.*
+                  FROM " . $this->table . " c
+                  WHERE c.id = :id
+                  LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    public function actualizarEstado($id_cita, $estado, $nota_clinica = null) {
+        $estadosPermitidos = ['pendiente', 'confirmada', 'cancelada', 'atendida'];
+        if (!in_array($estado, $estadosPermitidos, true)) {
+            return false;
+        }
+
+        if ($nota_clinica === null) {
+            $query = "UPDATE " . $this->table . "
+                      SET estado = :estado
+                      WHERE id = :id";
+        } else {
+            $query = "UPDATE " . $this->table . "
+                      SET estado = :estado, nota_clinica = :nota_clinica
+                      WHERE id = :id";
+        }
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':estado', $estado);
+        if ($nota_clinica !== null) {
+            $nota_clinica = htmlspecialchars(strip_tags($nota_clinica), ENT_QUOTES, 'UTF-8');
+            $stmt->bindParam(':nota_clinica', $nota_clinica);
+        }
+        $stmt->bindParam(':id', $id_cita, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }
 

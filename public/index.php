@@ -28,6 +28,9 @@ switch ($action) {
     case 'ver_certificado':
         $mascotaController->verCertificado();
         break;
+    case 'cambiar_estado_cita':
+        $citaController->cambiarEstadoCita();
+        break;
     case 'dashboard':
     default:
         $citaController->dashboard();
