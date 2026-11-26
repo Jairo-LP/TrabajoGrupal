@@ -20,6 +20,9 @@ switch ($action) {
     case 'logout':
         $authController->logout();
         break;
+    case 'actualizarEstadoCita':
+        $citaController->cambiarEstadoCita();
+        break;
     case 'dashboard':
     default:
         $citaController->dashboard();

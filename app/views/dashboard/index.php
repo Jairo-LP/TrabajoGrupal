@@ -20,6 +20,13 @@
     <?php endif; ?>
 </div>
 
+<?php if ($mensajeCita !== null): ?>
+    <div class="alert alert-<?= htmlspecialchars($mensajeCita['tipo']) ?> alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($mensajeCita['texto']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+<?php endif; ?>
+
 <?php if ($usuario['rol'] === 'cliente'): ?>
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-header bg-white fw-semibold">
@@ -100,9 +107,20 @@
                             <td><span class="badge <?= $badgeClass ?> text-uppercase"><?= htmlspecialchars($c['estado']) ?></span></td>
                             <td>
                                 <?php if ($usuario['rol'] === 'recepcionista'): ?>
-                                    <!-- TODO [Sprint 3 - RF05]: Conectar botones de confirmar / cancelar -->
-                                    <button class="btn btn-sm btn-outline-success" onclick="mostrarAlertaSprint('Sprint 3 - RF05: Confirmar cita #<?= $c['id'] ?>')">Confirmar</button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="mostrarAlertaSprint('Sprint 3 - RF05: Cancelar cita #<?= $c['id'] ?>')">Cancelar</button>
+                                    <?php if ($c['estado'] === 'pendiente'): ?>
+                                        <form method="post" action="index.php?action=actualizarEstadoCita" class="d-inline">
+                                            <input type="hidden" name="id_cita" value="<?= (int)$c['id'] ?>">
+                                            <input type="hidden" name="estado" value="confirmada">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">Aceptar</button>
+                                        </form>
+                                        <form method="post" action="index.php?action=actualizarEstadoCita" class="d-inline">
+                                            <input type="hidden" name="id_cita" value="<?= (int)$c['id'] ?>">
+                                            <input type="hidden" name="estado" value="cancelada">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Rechazar</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="small text-muted">Sin acciones disponibles</span>
+                                    <?php endif; ?>
                                 <?php elseif ($usuario['rol'] === 'veterinario'): ?>
                                     <!-- TODO [Sprint 3 - RF06]: Conectar modal para registrar diagnóstico y marcar atendida -->
                                     <button class="btn btn-sm btn-outline-primary" onclick="mostrarAlertaSprint('Sprint 3 - RF06: Atender cita #<?= $c['id'] ?>')">Atender</button>

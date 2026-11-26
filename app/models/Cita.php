@@ -35,5 +35,25 @@ class Cita {
     // TODO [Sprint 2 - RF04]: Implementar verificarDisponibilidad($id_veterinario, $fecha_hora)
     
     // TODO [Sprint 2 - RF03]: Implementar crear($id_mascota, $id_veterinario, $fecha_hora, $motivo)
-    // TODO [Sprint 3 - RF05/RF06]: Implementar actualizarEstado($id_cita, $estado, $nota_clinica = null)
-}
+    public function crear($id_mascota, $id_veterinario, $fecha_hora, $motivo) {
+        $query = "INSERT INTO " . $this->table . " (id_mascota, id_veterinario, fecha_hora, motivo) VALUES (:id_mascota, :id_veterinario, :fecha_hora, :motivo)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_mascota', $id_mascota);
+        $stmt->bindParam(':id_veterinario', $id_veterinario);
+        $stmt->bindParam(':fecha_hora', $fecha_hora);
+        $stmt->bindParam(':motivo', $motivo);
+        return $stmt->execute();
+    }
+    public function recepcionistaActualizarEstado($id_cita, $estado) {
+        if (!in_array($estado, ['confirmada', 'cancelada'], true)) {
+            return false;
+        }
+
+        $query = "UPDATE " . $this->table . "
+                  SET estado = :estado
+                  WHERE id = :id_cita AND estado = 'pendiente'";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->bindParam(':id_cita', $id_cita);
+        return $stmt->execute();
+    } 
