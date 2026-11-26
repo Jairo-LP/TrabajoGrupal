@@ -33,17 +33,40 @@ class Cita {
         return $stmt->fetchAll();
     }
 
-    // [Sprint 2 - RF03]: Crear una nueva cita
+    // Validar si el veterinario está disponible en esa fecha y hora
+    public function verificarDisponibilidad($id_veterinario, $fecha_hora) {
+        $query = "SELECT COUNT(*) AS total 
+                  FROM " . $this->table . " 
+                  WHERE id_veterinario = :id_veterinario 
+                  AND fecha_hora = :fecha_hora";
+                  // Nota: Si manejas estados, agrega: AND estado != 'cancelada'
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_veterinario', $id_veterinario);
+        $stmt->bindParam(':fecha_hora', $fecha_hora);
+        $stmt->execute();
+        
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Retorna true si el total es 0 (está disponible), false si ya hay una cita
+        return $row['total'] == 0;
+    }
+
+    // [Sprint 2 - RF03]: Crear una nueva cita validando disponibilidad
     public function crear($id_mascota, $id_veterinario, $fecha_hora, $motivo) {
+        // 1. Verificar disponibilidad antes de insertar
+        if (!$this->verificarDisponibilidad($id_veterinario, $fecha_hora)) {
+            return false; // O puedes lanzar una excepción: throw new Exception("Horario no disponible");
+        }
+
+        // 2. Insertar la cita si está disponible
         $query = "INSERT INTO " . $this->table . " (id_mascota, id_veterinario, fecha_hora, motivo) 
                   VALUES (:id_mascota, :id_veterinario, :fecha_hora, :motivo)";
         
         $stmt = $this->conn->prepare($query);
 
-        // Limpieza básica de datos
         $motivo = htmlspecialchars(strip_tags($motivo));
 
-        // Vinculación de parámetros
         $stmt->bindParam(':id_mascota', $id_mascota);
         $stmt->bindParam(':id_veterinario', $id_veterinario);
         $stmt->bindParam(':fecha_hora', $fecha_hora);
