@@ -21,7 +21,13 @@ CREATE TABLE mascotas (
     raza VARCHAR(80) DEFAULT 'Mestizo',
     edad INT DEFAULT 0,
     id_dueno INT NOT NULL,
-    FOREIGN KEY (id_dueno) REFERENCES usuarios(id) ON DELETE CASCADE
+    certificada TINYINT(1) NOT NULL DEFAULT 0,
+    codigo_certificado VARCHAR(40) NULL UNIQUE,
+    observacion_certificado VARCHAR(255) NULL,
+    fecha_certificacion DATETIME NULL,
+    certificado_por INT NULL,
+    FOREIGN KEY (id_dueno) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (certificado_por) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
 CREATE TABLE citas (
