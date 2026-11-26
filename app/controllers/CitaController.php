@@ -28,7 +28,7 @@ class CitaController {
             $mascotas = $this->mascotaModel->listarPorDueno($usuario['id']);
         } else {
             $citas = $this->citaModel->listarTodas();
-            $mascotas = [];
+            $mascotas = $this->mascotaModel->listarTodas();
         }
 
         require __DIR__ . '/../views/dashboard/index.php';

@@ -1,5 +1,21 @@
 <?php require __DIR__ . '/../layouts/header.php'; ?>
 
+<?php if (!empty($_SESSION['flash_success'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($_SESSION['flash_success']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    <?php unset($_SESSION['flash_success']); ?>
+<?php endif; ?>
+
+<?php if (!empty($_SESSION['flash_error'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($_SESSION['flash_error']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    <?php unset($_SESSION['flash_error']); ?>
+<?php endif; ?>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="fw-bold mb-0">Panel de Gestión de Citas</h3>
@@ -31,16 +47,102 @@
             <?php else: ?>
                 <div class="row g-3">
                     <?php foreach ($mascotas as $m): ?>
+                        <?php $estaCertificada = (int)($m['certificada'] ?? 0) === 1; ?>
                         <div class="col-md-4">
-                            <div class="border rounded p-3 bg-light">
-                                <h6 class="fw-bold mb-1"><?= htmlspecialchars($m['nombre']) ?></h6>
-                                <span class="badge bg-secondary"><?= htmlspecialchars($m['especie']) ?></span>
-                                <span class="small text-muted ms-1"><?= htmlspecialchars($m['raza']) ?> • <?= (int)$m['edad'] ?> años</span>
+                            <div class="border rounded p-3 bg-light h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <h6 class="fw-bold mb-0"><?= htmlspecialchars($m['nombre']) ?></h6>
+                                        <?php if ($estaCertificada): ?>
+                                            <span class="badge bg-success">Certificada</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Sin certificar</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <span class="badge bg-secondary"><?= htmlspecialchars($m['especie']) ?></span>
+                                    <span class="small text-muted ms-1"><?= htmlspecialchars($m['raza']) ?> • <?= (int)$m['edad'] ?> años</span>
+                                    <?php if ($estaCertificada && !empty($m['codigo_certificado'])): ?>
+                                        <div class="small text-muted mt-2">
+                                            Código: <strong><?= htmlspecialchars($m['codigo_certificado']) ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if ($estaCertificada): ?>
+                                    <div class="mt-3">
+                                        <a href="index.php?action=ver_certificado&id=<?= (int)$m['id'] ?>" class="btn btn-sm btn-outline-success w-100">
+                                            Ver Certificado
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
+        </div>
+    </div>
+<?php else: ?>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-semibold">
+            Certificación de Mascotas
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mascota</th>
+                        <th>Dueño</th>
+                        <th>Estado</th>
+                        <th>Código / Observación</th>
+                        <th>Emitir / Ver</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($mascotas)): ?>
+                        <tr><td colspan="5" class="text-center text-muted py-4">No hay mascotas registradas.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($mascotas as $m): ?>
+                            <?php $estaCertificada = (int)($m['certificada'] ?? 0) === 1; ?>
+                            <tr>
+                                <td>
+                                    <strong><?= htmlspecialchars($m['nombre']) ?></strong>
+                                    <div class="small text-muted"><?= htmlspecialchars($m['especie']) ?> • <?= htmlspecialchars($m['raza']) ?></div>
+                                </td>
+                                <td><?= htmlspecialchars($m['nombre_dueno'] ?? '') ?></td>
+                                <td>
+                                    <?php if ($estaCertificada): ?>
+                                        <span class="badge bg-success">Certificada</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($estaCertificada): ?>
+                                        <div class="small fw-semibold"><?= htmlspecialchars($m['codigo_certificado']) ?></div>
+                                        <div class="small text-muted"><?= htmlspecialchars($m['observacion_certificado'] ?? '') ?></div>
+                                    <?php else: ?>
+                                        <span class="small text-muted">Aún no certificada</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <form method="POST" action="index.php?action=certificar_mascota" class="d-flex gap-2 align-items-center">
+                                        <input type="hidden" name="id_mascota" value="<?= (int)$m['id'] ?>">
+                                        <input type="text" name="observacion_certificado" class="form-control form-control-sm" placeholder="Observación clínica..." value="<?= htmlspecialchars($m['observacion_certificado'] ?? '') ?>" required>
+                                        <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                                            <?= $estaCertificada ? 'Reemitir' : 'Certificar' ?>
+                                        </button>
+                                        <?php if ($estaCertificada): ?>
+                                            <a href="index.php?action=ver_certificado&id=<?= (int)$m['id'] ?>" class="btn btn-sm btn-outline-success text-nowrap">
+                                                Ver
+                                            </a>
+                                        <?php endif; ?>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 <?php endif; ?>
